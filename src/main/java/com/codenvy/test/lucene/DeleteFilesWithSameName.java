@@ -81,7 +81,11 @@ public class DeleteFilesWithSameName {
 
         searchAndPrintResult(indexPath);
 
-        Query query = new PrefixQuery(new Term(FIELD, "File"));
+        //delete files
+        System.out.println();
+        System.out.println("==================================================================");
+        System.out.println("delete by prefix \"File1\"");
+        Query query = new PrefixQuery(new Term(FIELD, "File1"));
 
         writer.deleteDocuments(query);
         writer.close();
