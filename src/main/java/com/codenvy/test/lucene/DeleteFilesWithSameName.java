@@ -46,17 +46,18 @@ import java.nio.file.Paths;
  */
 public class DeleteFilesWithSameName {
 
-    private static final String FIELD = "file";
+    private static final String PATH         = "path";
+    private static String filesDirPath;
 
     public static void main(String[] args) throws Exception {
-
-        String docDirName = "files";
+        String DOC_DIR_NAME = "files";
+        filesDirPath = Paths.get(DOC_DIR_NAME).toAbsolutePath().toString();
 
         Path indexPath = Paths.get("index");
+        Path docDir = Paths.get(DOC_DIR_NAME);
 
-        Path docDir = Paths.get(docDirName);
-        Path file1 = Paths.get(docDirName, "File1");
-        Path file2 = Paths.get(docDirName, "File1A");
+        Path file1 = Paths.get(DOC_DIR_NAME, "File1");
+        Path file2 = Paths.get(DOC_DIR_NAME, "File1A");
 
         Analyzer analyzer = new SimpleAnalyzer();
         IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
@@ -82,8 +83,8 @@ public class DeleteFilesWithSameName {
         //delete files
         System.out.println();
         System.out.println("==================================================================");
-        System.out.println("delete by prefix \"File1\"");
-        Query query = new PrefixQuery(new Term(FIELD, "File1"));
+        System.out.println("delete by prefix \""+ filesDirPath + "/File1\"");
+        Query query = new PrefixQuery(new Term(PATH, filesDirPath + "/File1"));
 
         writer.deleteDocuments(query);
         writer.close();
@@ -91,32 +92,30 @@ public class DeleteFilesWithSameName {
         searchAndPrintResult(indexPath);
     }
 
-    public static void searchAndPrintResult(Path indexPath) throws Exception{
+    public static void searchAndPrintResult(Path indexPath) throws Exception {
         IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
         IndexSearcher searcher = new IndexSearcher(reader);
 
-        Query query = new PrefixQuery(new Term(FIELD, "File"));
+        Query query = new PrefixQuery(new Term(PATH, filesDirPath + "/File1"));
         TopDocs topDocs = searcher.search(query, 100);
 
         System.out.println();
         System.out.println("=========================== search =================================");
         final String[] result = new String[topDocs.scoreDocs.length];
         for (int i = 0, length = result.length; i < length; i++) {
-            result[i] = searcher.doc(topDocs.scoreDocs[i].doc).getField(FIELD).stringValue();
+            result[i] = searcher.doc(topDocs.scoreDocs[i].doc).getField(PATH).stringValue();
             System.out.println(result[i]);
         }
 
         reader.close();
     }
 
-
-
     private static void indexDocs(IndexWriter writer, Path file) throws IOException {
         try (InputStream stream = Files.newInputStream(file)) {
             Document doc = new Document();
 
-            System.out.println("file name " + file.getFileName().toString());
-            Field pathField = new StringField(FIELD, file.getFileName().toString(), Field.Store.YES);
+            System.out.println("file path " + file.toAbsolutePath().toString());
+            Field pathField = new StringField(PATH, file.toAbsolutePath().toString(), Field.Store.YES);
             doc.add(pathField);
 
             doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))));
@@ -127,7 +126,7 @@ public class DeleteFilesWithSameName {
                 writer.addDocument(doc);
             } else {
                 System.out.println("updating " + file);
-                writer.updateDocument(new Term(FIELD, file.toString()), doc);
+                writer.updateDocument(new Term(PATH, file.toString()), doc);
             }
         }
     }
