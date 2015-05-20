@@ -46,7 +46,7 @@ import java.nio.file.Paths;
  */
 public class DeleteFilesWithSameName {
 
-    private static final String PATH         = "path";
+    private static final String PATH = "path";
     private static String filesDirPath;
 
     public static void main(String[] args) throws Exception {
